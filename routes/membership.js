@@ -77,22 +77,36 @@ module.exports = function (app) {
 
     console.log(`Start membership addition with body: ${JSON.stringify(req.body)}`);
 
-    stripe.charges.create({
-      amount:      config.membership.price,
-      card:        req.body.stripeToken,
-      currency:    'eur',
-      description: `Koodiklinikka ry jäsenyys: ${req.body.name}`
-    }, function(err, charge) {
+    const { handle, name, email } = req.body.userInfo
+
+    const createCustomer = (callback) =>
+      stripe.customers.create({
+        description: `${handle} - ${name}`,
+        email: email,
+        source: req.body.stripeToken,
+        metadata: req.body.userInfo
+      }, callback)
+
+    const createSubscription = (customer, callback) =>
+      stripe.subscriptions.create({
+        customer: customer.id,
+        plan: 'koodiklinikka'
+      }, callback)
+
+    async.waterfall([
+      createCustomer,
+      createSubscription
+    ], (err) => {
       if (err) {
-        log(`Membership payment FAILED for: ${JSON.stringify(req.body)}. Reason: ${err.message}`);
+        log(`Membership payment FAILED for: ${JSON.stringify(req.body.userInfo.email)}. Reason: ${err.message}`);
         res.status(500).send('payment_error');
         return;
       }
 
-      log(`Membership payment SUCCESSFUL for: ${JSON.stringify(req.body)}`);
+      log(`Membership payment SUCCESSFUL for: ${JSON.stringify(req.body.userInfo.email)}`);
       addNewMemberToSheets(req.body.userInfo, (err) => {
         if(err) {
-          log(`Storing membership info FAILED for: ${JSON.stringify(req.body)}. Reason: ${err.message}`);
+          log(`Storing membership info FAILED for: ${JSON.stringify(req.body.userInfo.email)}. Reason: ${err.message}`);
           res.status(500).send('membership_storage_error');
           return;
         }
