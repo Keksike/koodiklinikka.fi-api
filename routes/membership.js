@@ -6,9 +6,9 @@ var async             = require('async');
 var moment            = require('moment');
 var Joi               = require('joi');
 
-var slack   = require('../services/slack');
-var config  = require('../lib/config');
-var stripe  = require('stripe')(config.stripe.secretKey);
+var config          = require('../lib/config');
+var slack           = require('../services/slack');
+var stripe          = require('stripe')(config.stripe.secretKey);
 var validateRequest = require('../utils/validateRequest');
 
 function log(message) {
@@ -41,13 +41,13 @@ function addNewMemberToSheets(data, callback) {
     function addRow(sheet, cb) {
       console.log('Start Google Spreadsheet row write.');
       sheet.addRow({
-        'jäsenmaksu':     true,
+        'jäsenmaksu':     moment().format('DD.MM.YYYY'),
+        'katuosoite':     address,
         'koko nimi':      name,
         'liittymispäivä': moment().format('DD.MM.YYYY'),
-        'lisääjä':        'Koodiklinikka.fi-api',
-        'katuosoite':     address,
-        'postinumero':    postcode,
+        'lisääjä':        'koodiklinikka.fi-api',
         'paikkakunta':    city,
+        'postinumero':    postcode,
         'slack':          handle,
         'sähköposti':     email
       }, cb);
@@ -63,11 +63,11 @@ module.exports = function (app) {
 
   const schema = Joi.object().keys({
     userInfo: Joi.object().keys({
-      name: Joi.string().required(),
-      email: Joi.string().email().required(),
-      handle: Joi.string().required(),
-      address: Joi.string().required(),
-      city: Joi.string().required(),
+      address:  Joi.string().required(),
+      city:     Joi.string().required(),
+      email:    Joi.string().email().required(),
+      handle:   Joi.string().required(),
+      name:     Joi.string().required(),
       postcode: Joi.string().required()
     }),
     stripeToken: Joi.string().required()
@@ -82,15 +82,15 @@ module.exports = function (app) {
     const createCustomer = (callback) =>
       stripe.customers.create({
         description: `${handle} - ${name}`,
-        email: email,
-        source: req.body.stripeToken,
-        metadata: req.body.userInfo
+        email:        email,
+        metadata:     req.body.userInfo,
+        source:       req.body.stripeToken
       }, callback)
 
     const createSubscription = (customer, callback) =>
       stripe.subscriptions.create({
         customer: customer.id,
-        plan: 'koodiklinikka'
+        plan:     'koodiklinikka'
       }, callback)
 
     async.waterfall([
