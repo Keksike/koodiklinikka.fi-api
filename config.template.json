@@ -18,7 +18,7 @@
       "tokenSecret": ""
     },
     "google": {
-      "spreadsheetId": "",
+      "spreadsheetId": "1U3YuXSjHJjwj7mBCeUiQ7kjy1vTIVYAB89iJ2f_hP7g",
       "clientEmail": "",
       "privateKey": ""
     }
@@ -40,6 +40,11 @@
       "consumerSecret": "",
       "token": "",
       "tokenSecret": ""
+    },
+    "google": {
+      "spreadsheetId": "1BUL1pjaXVlO5MRuOk-W5MEmKqxfzGnj7eFMif8tIVaU",
+      "clientEmail": "",
+      "privateKey": ""
     }
   },
   "all": {
